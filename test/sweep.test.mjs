@@ -71,10 +71,13 @@ test('effectiveProviders reads the composed layers, not the stale snapshot', () 
   assert.equal(effectiveProviders({ configuration: () => [{ entry: { options: { id: 'llm-pi-ai' } } }] }, 'llm-pi-ai', fallback), fallback)
 })
 
-test('defaultStatusFile lands in the harness home', () => {  const previous = process.env.DSH_HOME
+test('defaultStatusFile lands in the harness home', () => {
+  const previous = process.env.DSH_HOME
   try {
-    process.env.DSH_HOME = 'C:/tmp/dsh-home'
-    assert.equal(defaultStatusFile(), 'C:\\tmp\\dsh-home\\api-thinking.status.json')
+    // assert through join() rather than a literal, so the check holds on both
+    // Windows and POSIX (path.join emits different separators)
+    process.env.DSH_HOME = join('tmp', 'dsh-home')
+    assert.equal(defaultStatusFile(), join('tmp', 'dsh-home', 'api-thinking.status.json'))
     delete process.env.DSH_HOME
     assert.match(defaultStatusFile(), /api-thinking\.status\.json$/)
   } finally {
