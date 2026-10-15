@@ -14,6 +14,8 @@
   "files": [
     "lib",
     "cordis.patch.yml",
+    "tools",
+    "test",
     "LICENSE",
     "README.md",
     "README.zh.md"
@@ -25,12 +27,24 @@
     "test": "node test/sweep.test.mjs",
     "check": "node tools/check_live.mjs",
     "diff": "node tools/diff_gateway_profile.mjs",
-    "install-bundle": "node tools/install_bundle.mjs"
+    "install-bundle": "node tools/install_bundle.mjs",
+    "prepack": "node test/sweep.test.mjs"
   },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "dsh",

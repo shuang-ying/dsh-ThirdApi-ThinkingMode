@@ -132,8 +132,32 @@ rename、注释与其它字段一律不碰），HMR 的配置监听会照常重�
 
 ## 安装
 
-它作为一个 **profile bundle** 安装：包内 `package.json` 声明 `dsh.bundle.patch`，profile 的
-`package.json` 在依赖里指向本目录、并把 `dsh-api-thinking` 加进 `dsh.profile.bundles`。
+三种方式效果相同 —— 最终都落到 profile 的依赖 + `dsh.profile.bundles`（包内 `package.json` 声明
+`dsh.bundle.patch`，这就是 DSH 的 **bundle** 形态）。**前两种就是 DSH 标准插件安装**：由插件管理器
+执行，会先做 DSH 版本兼容检查，装完自动重载 profile。
+
+### 1. 插件页 / `plugin_manager` 工具（标准）
+
+在「设置 → 插件」页，或让 Agent 用 `plugin_manager` 的 `install_bundle`，填入 spec：
+
+| spec | 何时可用 |
+|---|---|
+| `dsh-api-thinking` | 发布到 npm 之后（包名已确认未被占用） |
+| `github:shuang-ying/dsh-ThirdApi-ThinkingMode` | **现在就能用**（管理器支持 git spec，本机已实测） |
+| `https://github.com/shuang-ying/dsh-ThirdApi-ThinkingMode` | 同上（git / tarball 形式） |
+| `/绝对/路径/dsh-ThirdApi-ThinkingMode` | 本地目录（开发用） |
+
+底层就是 `pnpm add <spec>` 再把 `dsh-api-thinking` 追加进 `dsh.profile.bundles`。
+
+### 2. 命令行等价
+
+```bash
+cd ~/.dsh/profiles/<profile>
+pnpm add github:shuang-ying/dsh-ThirdApi-ThinkingMode
+# 再把 dsh-api-thinking 追加进 package.json 的 dsh.profile.bundles
+```
+
+### 3. 本地目录（开发用，附带脚本）
 
 ```bash
 git clone https://github.com/shuang-ying/dsh-ThirdApi-ThinkingMode.git ~/dsh-api-thinking
@@ -147,15 +171,18 @@ node tools/install_bundle.mjs             # 就地把本目录 link 进 profile
 常用参数：`--dest <dir>`（先复制到别处再装）、`--profile-dir <dir>`（默认 `$DSH_HOME/profiles/$DSH_PROFILE`，
 再退到 `~/.dsh/profiles/desktop`）。
 
-手工等价于：
+**卸载**：从 `dsh.profile.bundles` 移除、删掉该依赖（或在插件页关掉）；也可以在 profile patch 里给它
+`disabled: true`。
+
+### 发布到 npm（可选）
 
 ```bash
-cd ~/.dsh/profiles/<profile>
-pnpm add "link:/path/to/dsh-ThirdApi-ThinkingMode"
-# 再把 dsh-api-thinking 追加进 package.json 的 dsh.profile.bundles
+npm login
+npm publish        # prepack 会先跑测试，失败则不发布
 ```
 
-卸载：从 `dsh.profile.bundles` 移除、删除该依赖；或在 profile patch 里给它 `disabled: true`。
+发布后第 1 种方式的 `dsh-api-thinking` 即可用。tarball 只包含 `files` 列出的内容（lib、cordis.patch.yml、
+tools、test、README×2、LICENSE，约 36 KB）。
 
 > **覆盖 bundle 行的坑**：`applyEntryPatches` 在 patch 的 `name` 与已有条目不一致时会**静默跳过**
 > （`patch: name mismatch for %C ... skipping`）。所以你在 `cordis.patch.yml` 里写覆盖行时，

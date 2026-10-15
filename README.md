@@ -118,8 +118,36 @@ byte-identical.
 
 ## Install
 
-Installed as a **profile bundle**: the package declares `dsh.bundle.patch`, and
-the profile lists it as a dependency plus in `dsh.profile.bundles`.
+Three ways, same result — the profile gains a dependency plus an entry in
+`dsh.profile.bundles` (the package declares `dsh.bundle.patch`, which is what
+makes it a DSH **bundle**). The first two are the **standard DSH plugin install**:
+the plugin manager runs them, checks DSH version compatibility first, and reloads
+the profile when it is done.
+
+### 1. Plugin page / the `plugin_manager` tool
+
+In Settings → Plugins, or through the agent's `plugin_manager` `install_bundle`,
+pass one of these specs:
+
+| spec | available |
+|---|---|
+| `dsh-api-thinking` | once published to npm (the name is free) |
+| `github:shuang-ying/dsh-ThirdApi-ThinkingMode` | **right now** (the manager accepts git specs; verified here) |
+| `https://github.com/shuang-ying/dsh-ThirdApi-ThinkingMode` | same, as a git/tarball spec |
+| `/absolute/path/dsh-ThirdApi-ThinkingMode` | a local directory (development) |
+
+Under the hood that is `pnpm add <spec>` plus appending `dsh-api-thinking` to
+`dsh.profile.bundles`.
+
+### 2. The equivalent by hand
+
+```bash
+cd ~/.dsh/profiles/<profile>
+pnpm add github:shuang-ying/dsh-ThirdApi-ThinkingMode
+# then append dsh-api-thinking to package.json's dsh.profile.bundles
+```
+
+### 3. A local directory (development)
 
 ```bash
 git clone https://github.com/shuang-ying/dsh-ThirdApi-ThinkingMode.git ~/dsh-api-thinking
@@ -133,6 +161,20 @@ lockfile, runs `pnpm add "link:<this directory>"`, appends `dsh-api-thinking` to
 `dsh.profile.bundles`, and finally imports it the way the loader will. Useful
 flags: `--dest <dir>` (copy somewhere first), `--profile-dir <dir>` (defaults to
 `$DSH_HOME/profiles/$DSH_PROFILE`, then `~/.dsh/profiles/desktop`).
+
+**Uninstall**: drop it from `dsh.profile.bundles` and remove the dependency (or
+switch it off on the plugin page); `disabled: true` on its row in the profile
+patch works too.
+
+### Publishing to npm (optional)
+
+```bash
+npm login
+npm publish        # prepack runs the test suite first and blocks on failure
+```
+
+The tarball carries only what `files` lists — lib, cordis.patch.yml, tools, test,
+both READMEs and LICENSE, about 36 KB.
 
 > **Overriding a bundle row**: `applyEntryPatches` silently skips a patch whose
 > `name` differs from the existing entry (`patch: name mismatch ... skipping`).
