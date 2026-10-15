@@ -5,6 +5,7 @@
 English | [中文](README.zh.md)
 
 [![test](https://github.com/shuang-ying/dsh-ThirdApi-ThinkingMode/actions/workflows/test.yml/badge.svg)](https://github.com/shuang-ying/dsh-ThirdApi-ThinkingMode/actions/workflows/test.yml)
+[![npm](https://img.shields.io/npm/v/dsh-api-thinking.svg)](https://www.npmjs.com/package/dsh-api-thinking)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A **DSH (DeepSeek Harness) profile bundle** that reads each third-party model's
@@ -90,18 +91,18 @@ local-path form the plugin manager's `install_bundle` accepts. The body uses the
 standard contract (`name` / `inject` / `apply` / `ctx.effect` / `ctx.logger`) and
 prefers the official `ctx.configEditor.edit()` for writes.
 
-What it is not: published to npm (it installs from GitHub), and — deliberately —
-it imports nothing, so it has no `Config` schema and no runtime `dependencies`.
+What it is not: an official `@deepseek-ai/*` package, and — deliberately — it
+imports nothing, so it has no `Config` schema and no runtime `dependencies`.
 Its only peer declaration is an optional `@deepseek-ai/cordis`, left as `*` on
 purpose: npm accepts `*` against both stable and prerelease cordis, while a
 bounded range such as `>=4.0.1-rc.1 <5.0.0-0` fails with `ERESOLVE` on the
-prerelease builds newer harnesses ship. A package linked from outside the
-profile directory cannot resolve the harness's `node_modules` through Node's ESM
-resolution, so config is validated by hand in
-`normalizeConfig()`; the side effect is that the settings UI cannot derive a form
-for it and its config is edited as YAML. Installing from npm would lift that,
-since the dependency then lives in the package's own `node_modules`. There is no
-client half (no settings page, slots or locale dictionary), and
+prerelease builds newer harnesses ship. The harness's own `@deepseek-ai/cordis`
+sits in the DSH application's module tree, which is not an ancestor of the
+profile directory, so a plugin installed there cannot reach it through Node's
+ESM resolution — linked, git-installed and npm-installed alike. Config is
+therefore validated by hand in `normalizeConfig()`; the side effect is that the
+settings UI cannot derive a form for it and its config is edited as YAML. There
+is no client half (no settings page, slots or locale dictionary), and
 `README.i18n.yaml` is a monorepo-internal translation record, not part of the
 plugin form.
 
@@ -135,8 +136,8 @@ pass one of these specs:
 
 | spec | available |
 |---|---|
-| `dsh-api-thinking` | once published to npm (the name is free) |
-| `github:shuang-ying/dsh-ThirdApi-ThinkingMode` | **right now** (the manager accepts git specs; verified here) |
+| `dsh-api-thinking` | **npm — recommended**; published, `latest` is `0.1.0` |
+| `github:shuang-ying/dsh-ThirdApi-ThinkingMode` | git spec (the manager accepts these; verified here) |
 | `https://github.com/shuang-ying/dsh-ThirdApi-ThinkingMode` | same, as a git/tarball spec |
 | `/absolute/path/dsh-ThirdApi-ThinkingMode` | a local directory (development) |
 
@@ -170,15 +171,29 @@ flags: `--dest <dir>` (copy somewhere first), `--profile-dir <dir>` (defaults to
 switch it off on the plugin page); `disabled: true` on its row in the profile
 patch works too.
 
-### Publishing to npm (optional)
+### On npm
+
+`dsh-api-thinking` is published; `latest` is `0.1.0`:
 
 ```bash
-npm login
-npm publish        # prepack runs the test suite first and blocks on failure
+npm install dsh-api-thinking
 ```
 
-The tarball carries only what `files` lists — lib, cordis.patch.yml, tools, test,
-both READMEs and LICENSE, about 36 KB.
+The published tarball carries only what `files` lists — lib, cordis.patch.yml,
+tools, test, both READMEs and LICENSE: 16 files, 37.7 kB. `prepack` runs the test
+suite, so a failing build cannot be published.
+
+To cut a release:
+
+```bash
+npm version patch     # or minor / major
+npm publish
+```
+
+A **first** publish needs a direct-capable token plus a 2FA assertion
+(`npm publish --otp=<code>`, or the browser prompt). The 2FA-bypass granular
+tokens npm now issues can only publish to a staging area, and staging cannot
+create a package that does not exist yet.
 
 > **Overriding a bundle row**: `applyEntryPatches` silently skips a patch whose
 > `name` differs from the existing entry (`patch: name mismatch ... skipping`).
@@ -202,12 +217,22 @@ replacement (or a restart) picks up new code.
 
 ## Verify
 
+The maintenance tools infer locations from the environment (`DSH_HOME` /
+`DSH_PROFILE`, or `API_THINKING_PROFILE_DIR` / `API_THINKING_PROFILE`), and read
+the gateway from `API_THINKING_BASE_URL` (+ `API_THINKING_API_KEY`) or
+`API_THINKING_GATEWAY_CONFIG` (a config.json holding `{ listen, api_key }`):
+
 ```bash
-node test/sweep.test.mjs                        # 13 checks: pure logic, patch edits, real gateway catalog
-node tools/check_live.mjs                       # profile vs gateway, per model; drift must be 0
-node tools/simulate_new_model.mjs cn:glm-5.3    # strip a model's levels, watch them come back
+export API_THINKING_GATEWAY_CONFIG=/path/to/gateway/config.json   # gateway tools only
+node test/sweep.test.mjs            # 15 checks: pure logic, patch edits, composed config, real gateway catalog
+node tools/check_live.mjs           # live profile vs gateway, per model; drift must be 0
+node tools/diff_gateway_profile.mjs # "why is my new API missing": gateway vs profile, per model
+node tools/simulate_new_model.mjs cn:glm-5.3     # simulate a new model: strip its levels, watch them return
+node tools/simulate_new_route.mjs add|remove x   # simulate adding / deleting an API route
 ```
 
-Measured on this machine: 51 models, **drift 0**; stripping `cn:glm-5.3` and
-`global:gpt-5.5` was repaired within 6 seconds (`reason=start wrote=true
-via=patch-file changes=2`) touching only those two models.
+Measured on this machine: `check_live.mjs` → 51 models, **drift 0**; stripping the
+level blocks of `cn:glm-5.3` and `global:gpt-5.5` was repaired within 6 seconds;
+a newly added route had its models' levels within **8 seconds**; deleting that
+route left the sweep back at `changes=0 wrote=false`, with no trace of it in the
+file.

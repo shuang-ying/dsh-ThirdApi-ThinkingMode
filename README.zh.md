@@ -8,6 +8,7 @@ kind: "plugin-reference"
 [English](README.md) | 中文
 
 [![test](https://github.com/shuang-ying/dsh-ThirdApi-ThinkingMode/actions/workflows/test.yml/badge.svg)](https://github.com/shuang-ying/dsh-ThirdApi-ThinkingMode/actions/workflows/test.yml)
+[![npm](https://img.shields.io/npm/v/dsh-api-thinking.svg)](https://www.npmjs.com/package/dsh-api-thinking)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 一个 **DSH（DeepSeek Harness）profile bundle**：从每个第三方端点**自己的模型清单**里读出该模型真正
@@ -142,8 +143,8 @@ rename、注释与其它字段一律不碰），HMR 的配置监听会照常重�
 
 | spec | 何时可用 |
 |---|---|
-| `dsh-api-thinking` | 发布到 npm 之后（包名已确认未被占用） |
-| `github:shuang-ying/dsh-ThirdApi-ThinkingMode` | **现在就能用**（管理器支持 git spec，本机已实测） |
+| `dsh-api-thinking` | **npm 已发布，推荐**（`latest` 为 `0.1.0`） |
+| `github:shuang-ying/dsh-ThirdApi-ThinkingMode` | git spec（管理器支持，本机已实测） |
 | `https://github.com/shuang-ying/dsh-ThirdApi-ThinkingMode` | 同上（git / tarball 形式） |
 | `/绝对/路径/dsh-ThirdApi-ThinkingMode` | 本地目录（开发用） |
 
@@ -174,15 +175,26 @@ node tools/install_bundle.mjs             # 就地把本目录 link 进 profile
 **卸载**：从 `dsh.profile.bundles` 移除、删掉该依赖（或在插件页关掉）；也可以在 profile patch 里给它
 `disabled: true`。
 
-### 发布到 npm（可选）
+### npm 上已发布
+
+`dsh-api-thinking` 已发布，`latest` 为 `0.1.0`：
 
 ```bash
-npm login
-npm publish        # prepack 会先跑测试，失败则不发布
+npm install dsh-api-thinking
 ```
 
-发布后第 1 种方式的 `dsh-api-thinking` 即可用。tarball 只包含 `files` 列出的内容（lib、cordis.patch.yml、
-tools、test、README×2、LICENSE，约 36 KB）。
+已发布的 tarball 只包含 `files` 列出的内容（lib、cordis.patch.yml、tools、test、README×2、LICENSE），
+共 16 个文件、37.7 kB。`prepack` 会先跑测试，测试不过就发不出去。
+
+发新版本：
+
+```bash
+npm version patch     # 或 minor / major
+npm publish
+```
+
+**首次**发布需要一个 direct-capable token，外加一次 2FA 断言（`npm publish --otp=<验证码>`，或浏览器
+提示）。npm 现在签发的 2FA-bypass granular token **只能发到暂存区**，而暂存发布无法创建一个尚不存在的包。
 
 > **覆盖 bundle 行的坑**：`applyEntryPatches` 在 patch 的 `name` 与已有条目不一致时会**静默跳过**
 > （`patch: name mismatch for %C ... skipping`）。所以你在 `cordis.patch.yml` 里写覆盖行时，
@@ -223,7 +235,7 @@ node tools/simulate_new_route.mjs add|remove x   # 模拟"新增/删除一条 AP
 6 秒内补回；新增一条路由后 **8 秒**内其模型档位就位；删除该路由后扫描回到 `changes=0 wrote=false`，
 文件里再无该路由。
 
-## 插件形态：是官方那套，但不是"已发布的官方插件"
+## 插件形态：官方那套机制，但不是官方插件
 
 **同一套机制**：本包就是一个 DSH/Cordis 插件 + 一个 **profile bundle**（`package.json` 声明
 `dsh.bundle.patch`，profile 在依赖里指向它并把它列进 `dsh.profile.bundles`）。这与 `dsh-ops`、
@@ -236,15 +248,14 @@ node tools/simulate_new_route.mjs add|remove x   # 模拟"新增/删除一条 AP
 
 | 差异 | 原因 / 影响 |
 |---|---|
-| 未发布到 npm（可从 GitHub 安装） | 仓库是公开的，`repository`/`homepage`/`bugs` 已填、`private` 已去掉；要发 npm 直接 `npm publish` 即可（`files` 已列好） |
-| **零第三方 import**（不 `import { Schema } from '@deepseek-ai/cordis'`），因此没有 `Config` schema，也没有运行时 `dependencies`；唯一的 peer 声明是可选 `@deepseek-ai/cordis`，刻意留 `*`（npm 对 `*` 放行预发布版；换成 `>=4.0.1-rc.1 <5.0.0-0` 这类有界范围，会在新 harness 附带的预发布 cordis 上报 `ERESOLVE`） | 包被 link 在 profile 目录之外时，Node 的 ESM 解析**到不了** harness 的 `node_modules`（`profiles/<name>/node_modules` 不是它的祖先）。所以配置改为在 `normalizeConfig()` 里手工校验。**副作用**：设置页无法从 schema 派生出本插件的配置表单，配置只能手改 YAML。从 npm 安装（依赖装进它自己的 `node_modules`）就没有这个限制 |
+| 不是官方 `@deepseek-ai/*` 包 | 已发布到 npm（`dsh-api-thinking`，`latest` 为 `0.1.0`，`repository` 指回本仓库）；从 GitHub 或本地路径安装同样可行 |
+| **零第三方 import**（不 `import { Schema } from '@deepseek-ai/cordis'`），因此没有 `Config` schema，也没有运行时 `dependencies`；唯一的 peer 声明是可选 `@deepseek-ai/cordis`，刻意留 `*`（npm 对 `*` 放行预发布版；换成 `>=4.0.1-rc.1 <5.0.0-0` 这类有界范围，会在新 harness 附带的预发布 cordis 上报 `ERESOLVE`） | harness 自己的 `@deepseek-ai/cordis` 位于 DSH 应用的模块树里（`app.asar` 内），不是 profile 目录的祖先，所以装在 profile 里的插件用 Node 的 ESM 解析**到不了**它 —— link、git 安装、npm 安装都一样。因此配置改为在 `normalizeConfig()` 里手工校验。**副作用**：设置页无法从 schema 派生出本插件的配置表单，配置只能手改 YAML |
 | 没有客户端半边（无设置页、无 slot、无 locale 词典） | 它是纯宿主侧服务型插件；`README.i18n.yaml` 是 monorepo 内部的翻译校验记录，不属于插件形态 |
 | 回退写通道（直接改 patch） | 官方通道在"被热重载的插件"里会被 HMR 事务嵌套拒绝，见上文；这是对 `dsh-hmr` 行为的一个务实绕行 |
 
-要让"官方通道"始终可用（即去掉回退），可选：把插件发到 npm 并用 `pnpm add` 正常安装（peerDeps 让
-pnpm 把 `@deepseek-ai/cordis` 装进它自己的 `node_modules`），或在插件目录里手工建一个指向 harness
-`@deepseek-ai/cordis` 的 `node_modules` 链接 —— 但热重载路径下的事务嵌套问题与安装方式无关，
-仍会命中。
+回退通道与安装方式无关：即使现在从 npm 正常安装，**被热重载**时 `apply()` 仍然跑在替换它的那次 HMR
+事务里，`config-editor` 依旧会被判为嵌套事务。所以 `patch-file` 不是"本地安装的权宜之计"，而是热重载
+路径下的必需通道——只有插件永远不被热重载（或 `dsh-hmr` 改变该行为）才谈得上去掉它。
 
 ## 已知限制
 
