@@ -91,9 +91,13 @@ standard contract (`name` / `inject` / `apply` / `ctx.effect` / `ctx.logger`) an
 prefers the official `ctx.configEditor.edit()` for writes.
 
 What it is not: published to npm (it installs from GitHub), and — deliberately —
-it imports nothing, so it has no `Config` schema and no `peerDependencies`. A
-package linked from outside the profile directory cannot resolve the harness's
-`node_modules` through Node's ESM resolution, so config is validated by hand in
+it imports nothing, so it has no `Config` schema and no runtime `dependencies`.
+Its only peer declaration is an optional `@deepseek-ai/cordis`, left as `*` on
+purpose: npm accepts `*` against both stable and prerelease cordis, while a
+bounded range such as `>=4.0.1-rc.1 <5.0.0-0` fails with `ERESOLVE` on the
+prerelease builds newer harnesses ship. A package linked from outside the
+profile directory cannot resolve the harness's `node_modules` through Node's ESM
+resolution, so config is validated by hand in
 `normalizeConfig()`; the side effect is that the settings UI cannot derive a form
 for it and its config is edited as YAML. Installing from npm would lift that,
 since the dependency then lives in the package's own `node_modules`. There is no

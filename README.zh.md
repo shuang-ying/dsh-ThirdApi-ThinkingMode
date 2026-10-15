@@ -237,7 +237,7 @@ node tools/simulate_new_route.mjs add|remove x   # 模拟"新增/删除一条 AP
 | 差异 | 原因 / 影响 |
 |---|---|
 | 未发布到 npm（可从 GitHub 安装） | 仓库是公开的，`repository`/`homepage`/`bugs` 已填、`private` 已去掉；要发 npm 直接 `npm publish` 即可（`files` 已列好） |
-| **零第三方 import**（不 `import { Schema } from '@deepseek-ai/cordis'`），因此没有 `Config` schema，也没有 `peerDependencies` | 包被 link 在 profile 目录之外时，Node 的 ESM 解析**到不了** harness 的 `node_modules`（`profiles/<name>/node_modules` 不是它的祖先）。所以配置改为在 `normalizeConfig()` 里手工校验。**副作用**：设置页无法从 schema 派生出本插件的配置表单，配置只能手改 YAML。从 npm 安装（依赖装进它自己的 `node_modules`）就没有这个限制 |
+| **零第三方 import**（不 `import { Schema } from '@deepseek-ai/cordis'`），因此没有 `Config` schema，也没有运行时 `dependencies`；唯一的 peer 声明是可选 `@deepseek-ai/cordis`，刻意留 `*`（npm 对 `*` 放行预发布版；换成 `>=4.0.1-rc.1 <5.0.0-0` 这类有界范围，会在新 harness 附带的预发布 cordis 上报 `ERESOLVE`） | 包被 link 在 profile 目录之外时，Node 的 ESM 解析**到不了** harness 的 `node_modules`（`profiles/<name>/node_modules` 不是它的祖先）。所以配置改为在 `normalizeConfig()` 里手工校验。**副作用**：设置页无法从 schema 派生出本插件的配置表单，配置只能手改 YAML。从 npm 安装（依赖装进它自己的 `node_modules`）就没有这个限制 |
 | 没有客户端半边（无设置页、无 slot、无 locale 词典） | 它是纯宿主侧服务型插件；`README.i18n.yaml` 是 monorepo 内部的翻译校验记录，不属于插件形态 |
 | 回退写通道（直接改 patch） | 官方通道在"被热重载的插件"里会被 HMR 事务嵌套拒绝，见上文；这是对 `dsh-hmr` 行为的一个务实绕行 |
 
