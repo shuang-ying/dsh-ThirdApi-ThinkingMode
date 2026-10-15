@@ -1,0 +1,38 @@
+# api_thinking — bundle layer applied under the profile's own patch.
+#
+# Mounts the reasoning-effort detector: it reads each third-party endpoint's own
+# model listing and keeps llm-pi-ai's per-model `reasoningEfforts` in sync, so a
+# model added later still shows its real thinking levels in the composer.
+#
+# The values below are defaults. A profile can override any of them by repeating
+# this id in its own cordis.patch.yml — but the `name` must match this layer's
+# word for word, or composeEntries skips that patch as a name mismatch.
+- insert:
+    - id: api-thinking
+      name: dsh-api-thinking
+      config:
+        # Which profile row owns the providers this plugin reads and rewrites.
+        entryId: llm-pi-ai
+        # [] = every openai-compatible route; list route names to narrow it.
+        routes: []
+        # Re-sweep cadence, so a model added later is picked up without a restart.
+        # 0 disables the timer (the sweep then runs once, shortly after load).
+        intervalMs: 120000
+        # Delay before the first sweep, to let the profile finish loading.
+        startDelayMs: 3000
+        # Per-endpoint model-listing timeout.
+        timeoutMs: 15000
+        # Expose an explicit "off" for endpoints that allow disabling thinking.
+        # Off by default: pi-ai sends the mapped off value whenever no level is
+        # selected, so it would silently become the default for those models.
+        includeOff: false
+        # When an endpoint pins one effort and publishes no selectable set, show
+        # that single level so the picker says what the model runs at. Selecting
+        # it sends the same value the endpoint already pins, so nothing changes.
+        fixedEffortAsLevel: true
+        # Log every change and every skipped route (host logger may be invisible).
+        log: true
+        # Status document: '' = $DSH_HOME/api-thinking.status.json, false = none.
+        # Read it first when asking "why did nothing happen": every load and sweep
+        # records its per-route listing count, planned changes, write channel and error.
+        statusFile: ''

@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# profile patch backups written by the tools and by the detector
+*.bak
+*.bak-*
+*.bak-route
+*.bak-simulate
+*.tmp
+
+# the status document the plugin writes next to the harness home
+api-thinking.status.json
+
+# editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

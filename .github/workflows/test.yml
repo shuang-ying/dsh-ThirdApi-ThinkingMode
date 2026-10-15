@@ -1,0 +1,25 @@
+name: test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      # The suite is dependency-free on purpose: the plugin imports nothing, so
+      # there is nothing to install. The gateway cross-check test skips itself
+      # when tools/models.catalog.json is absent.
+      - name: Run the test suite
+        run: node test/sweep.test.mjs
