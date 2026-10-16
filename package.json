@@ -1,6 +1,6 @@
 {
   "name": "dsh-api-thinking",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "DSH profile bundle: reads each third-party model's thinking levels from its own endpoint and keeps llm-pi-ai's reasoningEfforts in sync",
   "type": "module",
   "main": "lib/index.js",
