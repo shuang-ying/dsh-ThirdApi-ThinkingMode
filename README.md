@@ -34,6 +34,12 @@ Yet an OpenAI-compatible gateway **usually already publishes that capability in 
 - **Idempotent** — a sweep that finds nothing to change writes no file at all.
 - **Self-diagnosing** — every load and every sweep records a status document, so there is always something to read when it misbehaves.
 
+## Screenshots
+
+![Thinking levels in the model picker](pictures/screenshot1.png)
+
+*Once installed, the model picker offers the thinking levels a model actually supports.*
+
 ## Install
 
 Requires a working DeepSeek Harness installation. The examples use the `desktop` profile — substitute your own profile name.

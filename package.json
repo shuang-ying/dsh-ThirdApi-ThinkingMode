@@ -16,6 +16,8 @@
     "cordis.patch.yml",
     "tools",
     "test",
+    "pictures",
+    "screenshots.json",
     "LICENSE",
     "README.md",
     "README.zh.md"
